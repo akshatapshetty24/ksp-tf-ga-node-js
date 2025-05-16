@@ -1,0 +1,19 @@
+{
+  "name": "hello-yonder",
+  "version": "1.0.0",
+  "description": "Sample Node.js application for Yonder deployment exercise",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "eslint .",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "eslint": "^9.20.1"
+  }
+}
