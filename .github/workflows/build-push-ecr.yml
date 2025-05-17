@@ -58,12 +58,12 @@ jobs:
       - name: Run Trivy config scan on Dockerfile
         continue-on-error: true
         run: |
-          trivy config --severity HIGH,CRITICAL --exit-code 1 --no-progress terraform/app/ || echo "Dockerfile config scan found issues"
+          trivy config --severity HIGH,CRITICAL --exit-code 1  terraform/app/ || echo "Dockerfile config scan found issues"
 
       - name: Run Trivy config scan on Kubernetes manifests
         continue-on-error: true
         run: |
-          trivy config --severity HIGH,CRITICAL --exit-code 1 --no-progress terraform/k8s/ || echo "K8s manifest config scan found issues"
+          trivy config --severity HIGH,CRITICAL --exit-code 1  terraform/k8s/ || echo "K8s manifest config scan found issues"
 
       - name: Build Docker Image
         run: |
