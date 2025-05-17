@@ -42,23 +42,17 @@ jobs:
         run: |
           npm audit --audit-level=high || echo "npm audit found issues"
 
-      - name: Build and Push Docker Image
+      - name: Install AWS CLI & Trivy
         run: |
-          REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ksp-ecr-app-repository
-          IMAGE_TAG=latest
+          sudo apt-get update
+          sudo apt-get install -y awscli wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+          trivy --version
 
-          # Build Docker image from terraform/app/ directory
-          docker build -t $REPOSITORY_URI:$IMAGE_TAG -f terraform/app/Dockerfile terraform/app/
 
-          # Push to ECR
-          docker push $REPOSITORY_URI:$IMAGE_TAG
-
-
-      # Trivy Image Scan
-      - name: Scan Docker image with Trivy
-        continue-on-error: true
-        run: |
-          trivy image --severity HIGH,CRITICAL --exit-code 1 --no-progress $REPOSITORY_URI:$IMAGE_TAG || echo "Image scan found issues"
 
       # Trivy Config Scan (Dockerfile & Kubernetes manifests)
       - name: Run Trivy config scan on Dockerfile
@@ -70,6 +64,30 @@ jobs:
         continue-on-error: true
         run: |
           trivy config --severity HIGH,CRITICAL --exit-code 1 --no-progress terraform/k8s/ || echo "K8s manifest config scan found issues"
+
+      - name: Build Docker Image
+        run: |
+          REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ksp-ecr-app-repository
+          IMAGE_TAG=latest
+
+          # Build Docker image from terraform/app/ directory
+          docker build -t $REPOSITORY_URI:$IMAGE_TAG -f terraform/app/Dockerfile terraform/app/
+
+      # Trivy Image Scan
+      - name: Scan Docker image with Trivy
+        continue-on-error: true
+        run: |
+          trivy image --severity HIGH,CRITICAL --exit-code 1 --no-progress $REPOSITORY_URI:$IMAGE_TAG || echo "Image scan found issues"
+          
+
+      - name: Push Docker Image to ECR Repository
+        run: |
+          REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ksp-ecr-app-repository
+          IMAGE_TAG=latest
+
+          # Push to ECR
+          docker push $REPOSITORY_URI:$IMAGE_TAG
+
 
       # Slack Notification if anything fails
       - name: Send Slack Notification on Failure
