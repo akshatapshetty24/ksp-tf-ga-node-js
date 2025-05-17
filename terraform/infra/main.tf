@@ -170,29 +170,3 @@ output "ecr_repository_url" {
   value = aws_ecr_repository.app_repo.repository_url
 }
 
-- name: Configure kubeconfig
-  run: |
-    aws eks update-kubeconfig --region $AWS_REGION --name ${var.cluster_name}
-
-
-resource "helm_release" "prometheus" {
-  name             = "prometheus"
-  repository       = "https://prometheus-community.github.io/helm-charts"
-  chart            = "prometheus"
-  namespace        = "monitoring"
-  create_namespace = true
-
-  version = "15.0.0"
-  values = [file("${path.module}/prometheus-values.yaml")]
-}
-
-resource "helm_release" "grafana" {
-  name       = "grafana"
-  repository = "https://grafana.github.io/helm-charts"
-  chart      = "grafana"
-  namespace  = "monitoring"
-
-  version    = "6.17.4"
-  depends_on = [helm_release.prometheus]
-  values     = [file("${path.module}/grafana-values.yaml")]
-}
