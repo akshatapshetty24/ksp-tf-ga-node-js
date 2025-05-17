@@ -1,0 +1,41 @@
+name: ☠️ 🗑️ Destroy AWS Infra & Kubernetes
+
+on:
+  workflow_dispatch:
+
+jobs:
+  destroy-infra:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Delete K8s Deployment & Service
+        run: |
+          kubectl delete -f terraform/k8s/ || true
+
+      - name: Initialize Terraform
+        working-directory: terraform/infra/
+        run: |
+          terraform init -backend-config="dynamodb_table=ksp-tf-ga-node-js-locks" -backend-config="bucket=ksp-tf-ga-node-js-state-bucket"
+
+      - name: Terraform Destroy AWS Infra
+        working-directory: terraform/infra/
+        run: |
+          terraform destroy -auto-approve           
+          
+
+          
