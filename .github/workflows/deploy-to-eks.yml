@@ -24,7 +24,7 @@ jobs:
           version: 'latest'
 
       - run: |
-          aws eks update-kubeconfig --name ksp-tf-ga-eks-v2 --region ${{ secrets.AWS_REGION }}
+          aws eks update-kubeconfig --name ${{ secrets.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
 
           ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
           REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ksp-ecr-app-repository
