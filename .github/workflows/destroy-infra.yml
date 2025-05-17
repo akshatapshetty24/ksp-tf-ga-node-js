@@ -35,7 +35,32 @@ jobs:
       - name: Terraform Destroy AWS Infra
         working-directory: terraform/infra/
         run: |
-          terraform destroy -auto-approve           
+          terraform destroy -auto-approve 
+
+      # Slack Notification on Failure
+      - name: Send Slack Notification on Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": ":x: *Destroy pipeline failed* for repository: *${{ github.repository }}* on branch *${{ github.ref }}*."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      # Slack Notification on Success
+      - name: Send Slack Notification on Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": ":white_check_mark: Successfully destroyed EKS, ECR, and infra for *${{ github.repository }}*."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
           
 
           
