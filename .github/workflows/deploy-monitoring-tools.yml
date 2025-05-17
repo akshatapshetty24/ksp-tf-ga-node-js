@@ -1,7 +1,10 @@
 name: 📊 Deploy Monitoring Stack (Prometheus & Grafana)
 
 on:
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["🚀 Deploy App to EKS"]
+    types:
+      - completed
 
 jobs:
   deploy-monitoring:
