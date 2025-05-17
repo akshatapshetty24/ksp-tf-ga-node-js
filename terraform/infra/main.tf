@@ -170,15 +170,10 @@ output "ecr_repository_url" {
   value = aws_ecr_repository.app_repo.repository_url
 }
 
-provider "kubernetes" {
-  config_path = "~/.kube/config"
-}
+- name: Configure kubeconfig
+  run: |
+    aws eks update-kubeconfig --region $AWS_REGION --name ${var.cluster_name}
 
-provider "helm" {
-  kubernetes {
-    config_path = "~/.kube/config"
-  }
-}
 
 resource "helm_release" "prometheus" {
   name             = "prometheus"
