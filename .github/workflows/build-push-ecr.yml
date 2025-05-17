@@ -31,13 +31,67 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      - name: Build and Push Docker Image
+
+      - name: Get ECR Repository URI
+        working-directory: terraform/infra/
+        id: ecr_uri
         run: |
-          REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ksp-ecr-app-repository
-          IMAGE_TAG=latest
+          echo "ECR_REPOSITORY_URI=$(terraform output -raw ecr_repository_uri)" >> $GITHUB_ENV
 
-          # Build Docker image from terraform/app/ directory
-          docker build -t $REPOSITORY_URI:$IMAGE_TAG -f terraform/app/Dockerfile terraform/app/
+      # Node.js Dependency Scan
+      - name: Install npm dependencies
+        working-directory: terraform/app/
+        run: npm install
 
-          # Push to ECR
-          docker push $REPOSITORY_URI:$IMAGE_TAG
+      - name: Run npm audit
+        working-directory: terraform/app
+        continue-on-error: true
+        run: |
+          npm audit --audit-level=high || echo "npm audit found issues"
+
+      - name: Build Docker Image
+        run: |
+          docker build -t $ECR_REPOSITORY_URI:latest terraform/app/
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push Docker image to ECR
+        run: docker push $ECR_REPOSITORY_URI:latest
+
+      # Install Trivy
+      - name: Install Trivy
+        run: |
+          sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.51.1_Linux-64bit.deb
+          sudo dpkg -i trivy_0.51.1_Linux-64bit.deb
+
+      # Trivy Image Scan
+      - name: Scan Docker image with Trivy
+        continue-on-error: true
+        run: |
+          trivy image --severity HIGH,CRITICAL --exit-code 1 --no-progress $ECR_REPOSITORY_URI:latest || echo "Image scan found issues"
+
+      # Trivy Config Scan (Dockerfile & Kubernetes manifests)
+      - name: Run Trivy config scan on Dockerfile
+        continue-on-error: true
+        run: |
+          trivy config --severity HIGH,CRITICAL --exit-code 1 --no-progress terraform/app/ || echo "Dockerfile config scan found issues"
+
+      - name: Run Trivy config scan on Kubernetes manifests
+        continue-on-error: true
+        run: |
+          trivy config --severity HIGH,CRITICAL --exit-code 1 --no-progress terraform/k8s/ || echo "K8s manifest config scan found issues"
+
+      # Slack Notification if anything fails
+      - name: Send Slack Notification on Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": ":x: CI/CD pipeline failed during *Build-Scan-Push to ECR* for repository: *${{ github.repository }}* on branch *${{ github.ref }}*."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        
