@@ -90,7 +90,7 @@ jobs:
         with:
           payload: |
             {
-              "text": ":x: CI/CD pipeline *Build-Scan-Push to ECR* executed successfully for repository: *${{ github.repository }}* on branch *${{ github.ref }}*."
+              "text": ":white_check_mark: CI/CD pipeline *Build-Scan-Push to ECR* executed successfully for repository: *${{ github.repository }}* on branch *${{ github.ref }}*."
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
