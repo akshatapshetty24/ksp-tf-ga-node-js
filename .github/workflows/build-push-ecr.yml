@@ -73,6 +73,11 @@ jobs:
           # Build Docker image from terraform/app/ directory
           docker build -t $REPOSITORY_URI:$IMAGE_TAG -f terraform/app/Dockerfile terraform/app/
 
+      - name: Debug image name
+        run: |
+          echo "Image to scan: $REPOSITORY_URI:$IMAGE_TAG"
+
+    
       # Trivy Image Scan
       - name: Scan Docker image with Trivy
         continue-on-error: true
