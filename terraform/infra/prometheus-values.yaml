@@ -1,0 +1,27 @@
+# Customize Prometheus for EKS monitoring
+alertmanager:
+  enabled: false  # disable if you don’t use alertmanager yet
+
+server:
+  persistentVolume:
+    enabled: false  # disable PV for simplicity, enable if you want data persistence
+
+  service:
+    type: LoadBalancer  # or ClusterIP for internal access
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+pushgateway:
+  enabled: false
