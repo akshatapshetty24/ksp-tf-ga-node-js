@@ -32,3 +32,28 @@ jobs:
 
           sed "s|<IMAGE_URI>|$REPOSITORY_URI:$IMAGE_TAG|g" terraform/k8s/deployment.yaml | kubectl apply -f -
           kubectl apply -f terraform/k8s/service.yaml
+
+      # Slack Notification on Failure
+      - name: Send Slack Notification on Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": ":x: *🚀 Deploy App to EKS pipeline failed* for repository: *${{ github.repository }}* on branch *${{ github.ref }}*."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      # Slack Notification on Success
+      - name: Send Slack Notification on Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": ":white_check_mark: Successfully 🚀 Deployed App to EKS for *${{ github.repository }}*."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
