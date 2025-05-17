@@ -75,6 +75,8 @@ jobs:
 
       - name: Debug image name
         run: |
+          REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ksp-ecr-app-repository
+          IMAGE_TAG=latest
           echo "Image to scan: $REPOSITORY_URI:$IMAGE_TAG"
 
     
@@ -82,6 +84,8 @@ jobs:
       - name: Scan Docker image with Trivy
         continue-on-error: true
         run: |
+          REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ksp-ecr-app-repository
+          IMAGE_TAG=latest
           trivy image --severity HIGH,CRITICAL --exit-code 1 --no-progress $REPOSITORY_URI:$IMAGE_TAG || echo "Image scan found issues"
           
 
