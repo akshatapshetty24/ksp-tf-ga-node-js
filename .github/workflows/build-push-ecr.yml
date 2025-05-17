@@ -42,7 +42,7 @@ jobs:
         run: |
           npm audit --audit-level=high || echo "npm audit found issues"
 
-      - name: Install AWS CLI & Trivy
+      - name: Install Trivy
         run: |
           sudo apt-get update
           sudo apt-get install -y wget apt-transport-https gnupg lsb-release
