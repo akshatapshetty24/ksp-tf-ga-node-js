@@ -14,6 +14,3 @@ output "eks_node_group_name" {
   value = aws_eks_node_group.example_nodes.node_group_name
 }
 
-output "ecr_repository_url" {
-  value = aws_ecr_repository.app_repo.repository_url
-}
