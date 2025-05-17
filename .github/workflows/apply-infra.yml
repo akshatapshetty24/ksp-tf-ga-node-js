@@ -20,7 +20,42 @@ jobs:
         with:
           terraform_version: 1.7.5
 
-      - run: |
-          cd terraform/infra
+      # Terraform Scan with Checkov
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Run Checkov Scan on Terraform
+        run: |
+          checkov -d terraform/infra --quiet || echo "Checkov found issues"
+
+      - name: Terraform Init & Apply
+        working-directory: terraform/infra/
+        run: |
           terraform init
           terraform apply -var-file=terraform.tfvars -auto-approve
+
+      # Slack Notification on Failure
+      - name: Send Slack Notification on Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": ":x: *🚀 Deploy AWS Infra pipeline failed* for repository: *${{ github.repository }}* on branch *${{ github.ref }}*."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      # Slack Notification on Success
+      - name: Send Slack Notification on Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": ":white_check_mark: Successfully 🚀 Deployed AWS Infra for *${{ github.repository }}*."
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+  
